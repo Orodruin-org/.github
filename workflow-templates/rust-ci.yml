@@ -1,0 +1,61 @@
+name: Rust CI Pipeline
+description: 'A workflow template for building, testing, and linting Rust applications.'
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout the repository
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      # Setup Rust toolchain
+      - name: Setup Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          target: x86_64-unknown-linux-gnu
+          override: true
+
+      # Cache Cargo registry and dependencies
+      - name: Cache Cargo Registry
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-registry-
+
+      # Build the project
+      - name: Build
+        run: cargo build --verbose
+
+      # Run tests
+      - name: Run Tests
+        run: cargo test --verbose
+
+      # Run Clippy for linting
+      - name: Run Clippy
+        run: cargo clippy -- -D warnings
+
+      # Check code formatting with rustfmt
+      - name: Check Formatting
+        run: |
+          cargo fmt -- --check
+
+      # Upload test results (optional)
+      - name: Upload Test Results
+        if: success() || failure()
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-results
+          path: target/debug/deps/
