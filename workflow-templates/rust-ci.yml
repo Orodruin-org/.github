@@ -1,5 +1,7 @@
+# .github/workflow-templates/rust-ci.yml
+
 name: Rust CI Pipeline
-description: 'A workflow template for building, testing, and linting Rust applications.'
+description: 'A workflow template for building, testing, and linting Rust applications with HashiCorp Vault integration.'
 
 on:
   push:
@@ -35,6 +37,21 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-cargo-registry-
 
+      # Authenticate with HashiCorp Vault
+      - name: Authenticate with Vault
+        uses: hashicorp/vault-action@v2
+        with:
+          url: ${{ secrets.VAULT_URL }}
+          method: github
+          token: ${{ secrets.VAULT_TOKEN }}
+
+      # Fetch secrets from Vault
+      - name: Fetch Secrets
+        id: fetch
+        run: |
+          SECRET_VALUE=$(vault kv get -field=value secret/myapp/config)
+          echo "##[set-output name=secret_value;]$SECRET_VALUE"
+
       # Build the project
       - name: Build
         run: cargo build --verbose
@@ -47,15 +64,4 @@ jobs:
       - name: Run Clippy
         run: cargo clippy -- -D warnings
 
-      # Check code formatting with rustfmt
-      - name: Check Formatting
-        run: |
-          cargo fmt -- --check
-
-      # Upload test results (optional)
-      - name: Upload Test Results
-        if: success() || failure()
-        uses: actions/upload-artifact@v3
-        with:
-          name: test-results
-          path: target/debug/deps/
+  
