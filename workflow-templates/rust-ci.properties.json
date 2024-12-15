@@ -1,0 +1,14 @@
+{
+    "name": "Rust CI Pipeline",
+    "description": "A workflow template for building, testing, and linting Rust applications.",
+    "iconName": "rust",
+    "categories": [
+        "CI",
+        "Testing"
+    ],
+    "filePatterns": [
+        "Cargo.toml$",
+        "Cargo.lock$",
+        ".*\\.rs$"
+    ]
+}
